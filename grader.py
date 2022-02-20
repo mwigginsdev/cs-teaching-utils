@@ -16,6 +16,7 @@ def runTest(dir):
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     print(error)
+    print(output)
     return output.decode("utf-8")
 
 
@@ -31,12 +32,15 @@ def writeError(zipName, error, files):
 
 workingDir = os.getcwd() + '/tmp'
 
+print("Current working dir: " + workingDir)
+
 parser = argparse.ArgumentParser(description='Process hw submissions')
 parser.add_argument('path', help='path to folder of all hw zip files')
 parser.add_argument('tester', help='path to tester file')
 
 args = parser.parse_args()
 
+print(os.getcwd() + '/grades.csv')
 try:
     shutil.rmtree(os.getcwd() + 'grades.csv')
 except:
@@ -44,7 +48,7 @@ except:
 
 
 try:
-    shutil.rmtree(os.getcwd() + 'errors.csv')
+    shutil.rmtree(os.getcwd() + '/errors.csv')
 except:
     print("no errors file")
 
@@ -65,10 +69,19 @@ for zip in zips:
                 os.mkdir(workingDir)
                 zip_ref.extractall(workingDir)
                 shutil.copy(args.tester, workingDir + '/test.cpp')
+                workingContents = os.listdir(workingDir)
+                print("WORKING CONTENTS: ", workingContents)
+                for root, dirs, files in os.walk(workingDir, topdown=False):
+                   for name in files:
+                      if (name in ["List.h", "Queue.h", "Stack.h"] and root != workingDir):
+                          shutil.copy(os.path.join(root, name), os.path.join(workingDir, name))
 
+                workingContents = os.listdir(workingDir)
                 output = runTest(workingDir)
+                print(output)
                 score = re.search("Tests: (.+?) out of 20", output)
                 writeScore(zip, score.group(1))
+
         except Exception as e:
             print("error running: ", zip)
             print(e)
